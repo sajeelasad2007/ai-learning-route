@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>AI Learning Route</title><meta name="theme-color" content="#1a0f1f"><meta name="description" content="A personal learning route for local AI and Python: lessons, notes, study timer, lab log, glossary."><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png" type="image/png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AI Route"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><style>
+/* VOICE everyday learning workspace, calm and practical
+   IDEA a transit route map plus a field notebook and lab book
+   PICTURE the route, stations filling as lessons are ticked, big progress figure and this week's hours
+   COLOUR plum-black ground, white ink, rose for done and current, dusk for the line, amber only for "review due"
+   TYPE system UI fonts so the file works fully offline
+   LAYOUT tabs under the header; route first; one column of lessons; tables stack on phones */
+:root{color-scheme:dark;--bg:#1a0f1f;--panel:#24162b;--panel2:#2d1d35;--ink:#fff;--soft:#d9cde3;--mute:#a996b8;--rose:#ff8fa3;--dusk:#8f7aa8;--line:#3d2b47;--amber:#ffc46b}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;overflow-x:clip}
+a{color:var(--ink);text-decoration-color:var(--rose);text-underline-offset:3px}
+a:hover{color:var(--rose)}
+.band{padding-block:clamp(20px,3.5vw,48px);padding-left:max(5vw,16px,env(safe-area-inset-left,0px));padding-right:max(5vw,16px,env(safe-area-inset-right,0px))}
+body>.band:first-child{padding-top:max(clamp(20px,3.5vw,48px),env(safe-area-inset-top,0px))}
+.wrap{max-width:1240px;margin:0 auto}
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end}
+h1{font-weight:300;font-size:clamp(32px,5vw,52px);line-height:1.05;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-weight:500;font-size:22px;line-height:1.25;margin:4px 0}
+.lede{color:var(--soft);max-width:62ch;margin:12px 0 0}
+.big{font-weight:300;font-size:clamp(56px,9vw,96px);line-height:1;letter-spacing:-.03em;text-align:right;white-space:nowrap}
+.big small{display:block;font-size:14px;color:var(--mute);letter-spacing:0;font-weight:400}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(10em,1fr));gap:10px;margin-top:22px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-weight:400;font-size:26px;line-height:1.1;white-space:nowrap}
+.stat span{font-size:13px;color:var(--mute)}
+.stat.warn b{color:var(--amber)}
+.meter{height:5px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden}.meter i{display:block;height:100%;background:var(--rose)}
+.route{list-style:none;margin:28px 0 0;padding:0;display:grid;grid-template-columns:repeat(9,minmax(0,1fr))}
+.route li{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding-top:4px}
+.route li::before{content:"";position:absolute;top:19px;left:0;right:0;height:6px;background:var(--line)}
+.route li.full::before{background:var(--rose)}
+.route li.half::before{background:linear-gradient(90deg,var(--rose) 50%,var(--line) 50%)}
+.route li:first-child::before{left:50%}.route li:last-child::before{right:50%}
+.stop{position:relative;width:36px;height:36px;border-radius:50%;border:5px solid var(--dusk);background:var(--bg);display:grid;place-items:center;font-weight:600;font-size:13px;color:var(--soft);cursor:pointer;padding:0}
+.stop.done{background:var(--rose);border-color:var(--rose);color:#1a0f1f}
+.stop.now{border-color:var(--rose);box-shadow:0 0 0 6px color-mix(in srgb,var(--rose) 25%,transparent)}
+.rlab{font-size:13px;line-height:1.3;color:var(--soft);max-width:12ch}
+.rlab b{display:block;color:var(--mute);font-weight:400}
+.card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:18px}
+.card.rev{border-color:var(--amber)}
+.lbl{font-size:13px;color:var(--rose)}
+.card.rev .lbl{color:var(--amber)}
+.meta{font-size:13px;color:var(--mute)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--rose);background:var(--rose);color:#1a0f1f;font-weight:600;font-size:15px;font-family:inherit;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px}
+.btn.on{border-color:var(--rose);color:var(--rose)}
+.btn:focus-visible,.chk:focus-visible,.stop:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,.tab:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.timer{font-variant-numeric:tabular-nums;font-size:20px;color:var(--rose);white-space:nowrap}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:24px;border-bottom:1px solid var(--line)}
+.tab{min-height:44px;padding:0 14px;background:none;border:0;border-bottom:3px solid transparent;color:var(--soft);font:inherit;cursor:pointer}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--rose)}
+.msg{margin-top:10px;font-size:14px;color:var(--rose);min-height:1.2em}
+.filters{display:grid;grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr)) auto;gap:8px;margin-top:18px}
+input,select,textarea{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--dusk);border-radius:10px;padding:10px 12px;font-size:16px;font-family:inherit}
+input,select{min-height:44px}
+textarea{min-height:110px;resize:vertical;line-height:1.5}
+label{font-size:13px;color:var(--mute);display:grid;gap:4px}
+.mod{border-top:1px solid var(--line);padding-top:24px;margin-top:24px}
+.mh{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center}
+.num{width:44px;height:44px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-weight:600;color:var(--soft)}
+.mod.complete .num{background:var(--rose);color:#1a0f1f}
+.mh h3{font-weight:500;font-size:clamp(22px,3vw,28px);line-height:1.15;margin:0}
+.mh p{margin:4px 0 0;color:var(--soft);font-size:15px}
+.count{font-size:14px;color:var(--mute);white-space:nowrap;text-align:right}
+.track{height:6px;background:var(--line);border-radius:3px;margin:14px 0 6px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--rose)}
+ul.items{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.item{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.item.done{background:transparent}
+.item.done .it{color:var(--mute);text-decoration:line-through;text-decoration-color:var(--dusk)}
+.item.doing{border-color:var(--rose)}
+.chk{width:44px;height:44px;border-radius:10px;border:2px solid var(--dusk);background:transparent;cursor:pointer;display:grid;place-items:center;color:#1a0f1f;font-weight:700;font-size:20px;padding:0}
+.item.done .chk{background:var(--rose);border-color:var(--rose)}
+.it{font-weight:500;line-height:1.35}
+.why{font-size:14px;color:var(--soft);margin-top:3px}
+.tag{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--soft);white-space:nowrap}
+.tag.hot{border-color:var(--rose);color:var(--rose)}.tag.due{border-color:var(--amber);color:var(--amber)}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.when{font-size:12px;color:var(--rose);white-space:nowrap}
+details.note{grid-column:2/-1}
+details.note summary{cursor:pointer;font-size:14px;color:var(--soft);min-height:36px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+details.note summary b{color:var(--rose);font-weight:500}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.ctl .meta{margin-right:4px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(11em,1fr));gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:14px}
+.form .wide{grid-column:1/-1}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:14px;font-size:15px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mute);font-weight:500;font-size:13px}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.gl{display:grid;gap:10px;margin-top:14px}
+.term{display:grid;grid-template-columns:minmax(9em,14em) minmax(0,1fr) auto;gap:12px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.term b{font-weight:500}
+.term textarea{min-height:64px}
+.q{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.q.done{background:transparent}.q.done .qt{color:var(--mute);text-decoration:line-through}
+.q textarea{min-height:60px;margin-top:6px}
+.dlg{background:var(--panel2);border:1px solid var(--rose);border-radius:14px;padding:16px;margin-top:14px}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(14em,1fr));gap:16px;color:var(--soft);font-size:15px}
+.how b{color:var(--ink);display:block;margin-bottom:2px}
+footer{color:var(--mute);font-size:13px}
+.hide{display:none!important}
+.empty{color:var(--mute);padding:16px 0}
+@media(max-width:760px){.route{grid-template-columns:minmax(0,1fr)}.route li{flex-direction:row;text-align:left;gap:14px;padding:6px 0}.route li::before{top:0;bottom:0;left:15px;right:auto;width:6px;height:auto}.route li:first-child::before{top:50%;left:15px}.route li:last-child::before{bottom:50%;right:auto}.route li.half::before{background:linear-gradient(180deg,var(--rose) 50%,var(--line) 50%)}.rlab{max-width:none}.rlab b{display:inline;margin-left:6px}.filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.filters input{grid-column:1/-1}}
+@media(max-width:600px){.top{grid-template-columns:minmax(0,1fr)}.big{text-align:left}.card{grid-template-columns:minmax(0,1fr)}.mh{grid-template-columns:auto minmax(0,1fr)}.count{grid-column:1/-1;text-align:left}.item,.q{grid-template-columns:44px minmax(0,1fr)}.side,.q .side{grid-column:2;flex-direction:row;align-items:center;justify-content:flex-start;flex-wrap:wrap}details.note{grid-column:1/-1}.term{grid-template-columns:minmax(0,1fr)}table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:8px;border-bottom:1px solid var(--line)}.stack td{display:flex;justify-content:space-between;gap:12px;border:0;padding:3px 0;text-align:right}.stack td::before{content:attr(data-l);color:var(--mute);text-align:left}}
+</style></head><body>
+<div class="band"><div class="wrap">
+<div class="top"><div><h1>From vibe coding to knowing why it works</h1><p class="lede">Your learning workspace: the route, notes, study time, model tests, glossary and questions in one app. Everything saves on this device. Export to back up, move devices or show Claude.</p></div><div class="big" id="pct">0%<small>loading…</small></div></div>
+<div class="stats" id="stats"></div>
+<div class="card" id="timerCard"></div>
+<div class="row" style="margin-top:14px">
+<button class="btn" id="exp">Export file</button>
+<button class="btn ghost" id="imp">Import file</button>
+<input type="file" id="file" accept=".json,application/json" class="hide">
+<button class="btn ghost" id="sum">Summary for Claude</button>
+<button class="btn ghost hide" id="inst">Install app</button>
+<span class="meta" id="save" style="margin-left:auto">Saved on this device.</span>
+</div>
+<div id="impDlg" class="dlg hide"><p id="impTxt" style="margin-top:0"></p><div class="row"><button class="btn" id="impMerge">Merge with this device</button><button class="btn ghost" id="impReplace">Replace this device</button><button class="btn ghost" id="impCancel">Cancel</button></div><p class="meta">Merge keeps everything from both: newer notes win, all lab runs, terms and questions are combined.</p></div>
+<div id="outbox" class="dlg hide"><p class="meta" style="margin-top:0">Your progress and notes as text, already selected. Copy and paste it to Claude, or download it.</p><textarea id="out" readonly aria-label="Summary text" style="min-height:200px"></textarea><div class="row" style="margin-top:10px"><button class="btn" id="cpy">Copy</button><button class="btn ghost" id="dmd">Download .md</button><button class="btn ghost" id="cls">Close</button></div></div>
+<div id="iosTip" class="dlg hide"><p style="margin:0">On iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b>. The app then opens full screen and works offline. Its data is separate from Safari's, so use the home-screen app from then on.</p><div class="row" style="margin-top:10px"><button class="btn ghost sm" id="iosClose">Got it</button></div></div>
+<div class="msg" id="msg" role="status"></div>
+<div class="tabs" role="tablist">
+<button class="tab" role="tab" data-tab="route" aria-selected="true">Route</button>
+<button class="tab" role="tab" data-tab="lab" aria-selected="false">Lab log</button>
+<button class="tab" role="tab" data-tab="terms" aria-selected="false">Glossary</button>
+<button class="tab" role="tab" data-tab="qs" aria-selected="false">Questions</button>
+<button class="tab" role="tab" data-tab="book" aria-selected="false">Notebook</button>
+</div>
+<section id="p-route"><ol class="route" id="route"></ol><div id="review"></div><div id="next"></div>
+<div class="filters"><input id="fq" type="search" placeholder="Search lessons and notes" aria-label="Search lessons and notes"><select id="fk" aria-label="Type"><option value="">All types</option><option>Video</option><option>Read</option><option>Course</option><option>Do</option></select><select id="fs" aria-label="Status"><option value="">All lessons</option><option value="todo">To do</option><option value="doing">In progress</option><option value="done">Done</option><option value="due">Review due</option><option value="notes">With notes</option></select><button class="btn ghost" id="fx">Clear</button></div>
+<div id="mods"></div></section>
+<section id="p-lab" class="hide"><p class="lede">Every model test you run, in one table. Compare models, settings and your hardware changes over time.</p>
+<form class="form" id="labForm"><label>Date<input type="date" id="l-date"></label><label>Model<input id="l-model" placeholder="Gemma 4 26B-A4B" required></label><label>Quant<input id="l-quant" placeholder="Q4_K_M"></label><label>Context<input id="l-ctx" type="number" min="0" placeholder="8192"></label><label>Tokens / s<input id="l-tps" type="number" step="0.01" min="0" placeholder="96.17"></label><label>First token (s)<input id="l-ttft" type="number" step="0.01" min="0" placeholder="0.09"></label><label>VRAM dedicated (GB)<input id="l-vram" type="number" step="0.1" min="0" placeholder="18.9"></label><label>Shared GPU mem (GB)<input id="l-shared" type="number" step="0.1" min="0" placeholder="0.3"></label><label class="wide">What you tested and what happened<input id="l-notes" placeholder="Bank test, thinking off; RLock correct"></label><div class="wide row"><button class="btn" type="submit">Add run</button><span class="meta" id="labErr"></span></div></form>
+<div class="row" style="margin-top:10px"><button class="btn ghost sm" id="labCsv">Download CSV</button></div>
+<div class="scroll"><table class="stack" id="labT"></table></div></section>
+<section id="p-terms" class="hide"><p class="lede">Write each definition in your own words. If you can't, that's the next thing to study.</p>
+<form class="form" id="termForm"><label>New term<input id="t-new" placeholder="e.g. Flash attention"></label><div class="row" style="align-self:end"><button class="btn" type="submit">Add term</button></div></form>
+<div class="gl" id="gl"></div></section>
+<section id="p-qs" class="hide"><p class="lede">Questions to ask Claude or to find out yourself. They go into the summary for Claude.</p>
+<form class="form" id="qForm"><label class="wide">New question<input id="q-new" placeholder="Why does a longer context use more VRAM?"></label><div class="row"><button class="btn" type="submit">Add question</button></div></form>
+<div class="gl" id="ql"></div></section>
+<section id="p-book" class="hide"><p class="lede">Anything not tied to one lesson: ideas, what you tried today, plans.</p><textarea id="journal" aria-label="Notebook" style="min-height:320px" placeholder="25 Nov: set up the learning route…"></textarea></section>
+</div></div>
+<div class="band" style="background:var(--panel)"><div class="wrap"><div class="how">
+<div><b>Where your data lives</b>In this browser on this device, saved as you type. Nothing is sent anywhere. Clearing browser data deletes it, so export now and then.</div>
+<div><b>Moving devices</b>Export file, send the .json over (OneDrive, email to yourself, AirDrop), open this page on the other device, Import file, then Merge.</div>
+<div><b>Reviews</b>When you tick a lesson, rate it. Shaky comes back in 3 days, Okay in 7, Solid never. Due reviews show at the top.</div>
+<div><b>Pace</b>Set a weekly goal. 6 to 8 hours a week finishes stages 1 to 6 in about a month; run Python daily from week two.</div>
+</div><footer><p>Links checked on 25 November 2026. Course pages can move; if one breaks, ask Claude for a replacement and add it as your own lesson.</p></footer></div></div>
+<script>
+{
+const M=[
+{id:"m1",short:"Your system",title:"Know your own system",goal:"Turn what you built by trial and error into something you can explain.",items:[
+["m1a","Write your current setup in your own words","Do","",30,"Write it in this lesson's notes: PC specs, LM Studio, Gemma 4 26B, Qwen Coder 32B, Gemma 12B, what each part does and why you chose it."],
+["m1b","List 5 problems you hit and their real causes","Do","",45,"In the notes: VRAM spill into RAM, model reloads, the 4096-token error, two models crashing the PC, the broken bridge URL."],
+["m1c","Re-read your migration notes in the Claude project","Read","",30,"The AI WORKSPACE MIGRATION project: what changed, what is archived, what is current."]]},
+{id:"m2",short:"Safety",title:"Safety habits first",goal:"The few rules that would have prevented every scary moment so far.",items:[
+["m2a","LLM security: jailbreaks and prompt injection (Karpathy, from 45:43)","Video","https://www.youtube.com/watch?v=zjkBMFhNj_g&t=2743s",15,"Why a model can be tricked by text it reads, and why AI must not run code on your PC unchecked."],
+["m2b","Make your secrets rules","Do","",20,"Keys live in settings or environment variables only: never in code, docs or chats. Leaked key means revoke at once, like the CHAT_04 key."],
+["m2c","Adopt the backup + one-change rule","Do","",15,"Back up before changing anything (you have AI_Backup_2026-11-08), change one thing, test, then the next."]]},
+{id:"m3",short:"How LLMs work",title:"How language models work",goal:"Tokens, parameters, layers, attention, context: the words you already use, understood.",items:[
+["m3a","TensorFlow Playground: train the spiral","Do","https://playground.tensorflow.org",30,"See neurons and weights change live. Add layers until the spiral is solved."],
+["m3b","3Blue1Brown neural networks, chapters 1 and 2","Video","https://www.3blue1brown.com/topics/neural-networks",40,"What a neuron, a weight and learning actually are."],
+["m3c","3Blue1Brown chapter 5: But what is a GPT?","Video","https://www.3blue1brown.com/lessons/gpt",27,"Tokens, embeddings and next-token prediction, visually."],
+["m3d","3Blue1Brown chapter 6: Attention","Video","https://www.3blue1brown.com/lessons/attention",26,"The mechanism that lets a model use its context window."],
+["m3e","Karpathy: Intro to Large Language Models (1 hour)","Video","https://www.youtube.com/watch?v=zjkBMFhNj_g",60,"The big picture: two files, training stages, tool use."],
+["m3f","Transformer Explainer: type your own sentences","Do","https://poloclub.github.io/transformer-explainer/",30,"A real GPT-2 running in your browser, every step visible."],
+["m3g","Karpathy: Deep Dive into LLMs (3.5 h, in 3 sittings)","Video","https://www.youtube.com/watch?v=7xTGNNLPyMI",210,"Pretraining, fine-tuning, reinforcement learning, why models hallucinate and miscount."],
+["m3h","Checkpoint: explain 5 terms out loud","Do","",30,"Token, parameter, context window, quantization, base vs instruct model. If one is shaky, rewatch that part."]]},
+{id:"m4",short:"Local models",title:"Running models on your own PC",goal:"Understand exactly why Gemma runs at 96 tok/s and Qwen 32B at 11.",items:[
+["m4a","A Visual Guide to Quantization","Read","https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-quantization",45,"What Q4_K_M and Q8 mean and what you trade for size."],
+["m4b","Hugging Face: the GGUF format","Read","https://huggingface.co/docs/hub/gguf",15,"The file type every model you download uses."],
+["m4c","A Visual Guide to Mixture of Experts","Read","https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-mixture-of-experts",40,"Why Gemma 26B-A4B is fast but still needs memory for all 26B."],
+["m4d","LM Studio documentation: the app","Read","https://lmstudio.ai/docs/app",30,"Loading models, GPU offload, context length, chats."],
+["m4e","LM Studio: lms load (context, GPU offload, memory estimate)","Read","https://lmstudio.ai/docs/cli/local-models/load",15,"Estimate memory before loading, so nothing spills or crashes."],
+["m4f","Lab: Gemma at 8192 vs 16384 context","Do","",45,"Record tok/s, time to first token, dedicated and shared GPU memory for both. Keep the numbers."],
+["m4g","Lab: explain the 96 vs 11 tok/s gap with numbers","Do","",30,"Model size vs 20 GB VRAM, active parameters, RAM speed. Write 5 sentences."]]},
+{id:"m5",short:"Using models",title:"Using and judging models",goal:"Get better answers and catch wrong ones, from any AI.",items:[
+["m5a","Karpathy: How I use LLMs","Video","https://www.youtube.com/watch?v=EWvNQjAaOHw",131,"Practical habits: thinking models, tools, new chats per topic."],
+["m5b","Prompt engineering overview (Claude docs)","Read","https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview",20,"Clear success criteria before prompting. Works for Gemma too."],
+["m5c","Anthropic prompt engineering interactive tutorial, chapters 1 to 6","Course","https://github.com/anthropics/prompt-eng-interactive-tutorial",180,"Clarity, roles, examples, structure. Try each lesson on your local Gemma."],
+["m5d","Build your own 10-question test set","Do","",60,"Like the S1 to S6 test: questions with known answers, scored for every model you try."],
+["m5e","Practise trust but verify","Do","",20,"Qwen claimed a sandbox test that never ran; another AI mixed up your two code runs. Check every claim yourself."]]},
+{id:"m6",short:"Computer basics",title:"Computer basics: shell and Git",goal:"Run commands with confidence and never lose work.",items:[
+["m6a","Microsoft Learn: Introduction to PowerShell","Course","https://learn.microsoft.com/training/modules/introduction-to-powershell",45,"The shell you already use for netstat and taskkill."],
+["m6b","PowerShell 101 (first chapters)","Read","https://learn.microsoft.com/powershell/scripting/learn/ps101/00-introduction",90,"Commands, help, pipelines."],
+["m6c","Missing Semester: the shell and version control lectures","Course","https://missing.csail.mit.edu/",120,"MIT's course on the tools nobody teaches."],
+["m6d","Pro Git, chapters 1 and 2","Read","https://git-scm.com/book/en/v2",90,"Save every version of your scripts and undo mistakes."],
+["m6e","Explain every line of Stop AI Station.bat","Do","",30,"It is in your backup folder. taskkill, netstat, findstr: what does each do?"]]},
+{id:"m7",short:"Python",title:"Python foundations",goal:"The big one. Start it early and do 30 to 60 minutes most days.",items:[
+["m7a","Set up VS Code for Python with a virtual environment","Do","https://code.visualstudio.com/docs/python/python-tutorial",45,"Python 3.12 is already on your PC. Create one project folder per idea."],
+["m7b","CS50P lectures 0 to 2: functions, conditionals, loops","Course","https://cs50.harvard.edu/python/",720,"Watch, then do every problem set. Free from Harvard."],
+["m7c","Automate the Boring Stuff, part 1 (alongside CS50P)","Read","https://automatetheboringstuff.com/",600,"Free online. Practical Windows-friendly examples."],
+["m7d","CS50P lectures 3 to 5: exceptions, libraries, unit tests","Course","https://cs50.harvard.edu/python/",720,"Exactly the skills the bridge and launcher needed."],
+["m7e","CS50P lectures 6 to 8: files, regular expressions, classes","Course","https://cs50.harvard.edu/python/",720,"Read logs and files like your AI tests did."],
+["m7f","Bookmark the official Python tutorial as reference","Read","https://docs.python.org/3/tutorial/",60,"Where to check how something really works."],
+["m7g","CS50P final project","Do","https://cs50.harvard.edu/python/",600,"Pick something from your own workflow."]]},
+{id:"m8",short:"Python + AI",title:"Python with your local AI",goal:"Write the scripts yourself that you used to ask AI for.",items:[
+["m8a","LM Studio: OpenAI-compatible endpoints","Read","https://lmstudio.ai/docs/developer/openai-compat",40,"How any script talks to Gemma at localhost:1234."],
+["m8b","LM Studio Python SDK (lmstudio-python)","Read","https://lmstudio.ai/docs/python",40,"Load models and chat from Python."],
+["m8c","Project 1: ask_gemma.py","Do","",120,"Send one question, print the answer and the tokens per second."],
+["m8d","Project 2: benchmark runner","Do","",240,"Run your 10-question test set on every model and save the results to a CSV file."],
+["m8e","Project 3: rebuild a mini bridge yourself","Do","",480,"Images to a vision model, long text condensed. Compare with smart_bridge.py in your backup."],
+["m8f","Project 4: safe file organiser","Do","",360,"Dry run first, never deletes, logs every move. Your own idea from the Google chat, done safely."]]},
+{id:"m9",short:"Go deeper",title:"Go deeper (optional)",goal:"For when the basics feel easy.",items:[
+["m9a","Hugging Face LLM Course","Course","https://huggingface.co/learn/llm-course/chapter1/1",900,"Transformers library, fine-tuning, building with models."],
+["m9b","Neuronpedia: Gemma Scope, look inside a real Gemma","Do","https://www.neuronpedia.org/gemma-scope",45,"Real features lighting up inside Gemma models. Works on iPhone too."],
+["m9c","Project: Brain Viewer of a small model","Do","",240,"Record real neuron activations of GPT-2 and draw them glowing. Build it with Claude."]]}
+];
+const KEY="ai-learning-route-v2",OLD="ai-learning-route-v1";
+const KINDS=["Video","Read","Course","Do"];
+const TERMS=["Token","Parameter","Context window","KV cache","VRAM","Shared GPU memory","Quantization","GGUF","Q4_K_M","Mixture of Experts (MoE)","Active parameters","GPU offload","Tokens per second","Time to first token","Temperature","System prompt","Thinking mode","Vision model","Prompt injection","API endpoint","Embedding","RAG","Virtual environment","Git commit"];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safeUrl=u=>/^https?:\/\//i.test(u||"")?u:"";
+const hrs=m=>m>=60?(Math.round(m/6)/10)+" h":Math.round(m)+" min";
+const dstr=d=>{const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+const today=()=>dstr(Date.now());
+const addDays=(s,n)=>{const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return dstr(d)};
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const blank=()=>({v:2,done:{},status:{},conf:{},due:{},notes:{},custom:[],sessions:[],labs:[],terms:TERMS.map(t=>({id:"t-"+t.toLowerCase().replace(/[^a-z0-9]+/g,"-"),term:t,def:"",updated:""})),questions:[],journal:"",weekGoal:7,timer:null,lastExport:"",updated:""});
+let S=blank(),hideDone=false,saveT=null,pending=null,tick=null;
+function str(x,n){return typeof x==="string"?x.slice(0,n):""}
+function num(x){const v=Number(x);return isFinite(v)&&x!==""&&x!==null?v:null}
+function clean(j){const o=blank();if(!j||typeof j!=="object")return o;
+ const obj=k=>j[k]&&typeof j[k]==="object"&&!Array.isArray(j[k])?j[k]:{};
+ const arr=k=>Array.isArray(j[k])?j[k]:[];
+ o.custom=arr("custom").filter(c=>c&&c.id&&c.t).slice(0,500).map(c=>({id:str(c.id,40),stage:M.some(m=>m.id===c.stage)?c.stage:"m9",t:str(c.t,200),k:KINDS.includes(c.k)?c.k:"Do",u:safeUrl(str(c.u,500)),min:Math.max(0,Math.min(6000,num(c.min)||30)),why:str(c.why,400)}));
+ const ids=new Set(allItems(o.custom).map(x=>x.id));
+ for(const[k,v]of Object.entries(obj("done")))if(ids.has(k))o.done[k]=str(String(v),10);
+ for(const[k,v]of Object.entries(obj("status")))if(ids.has(k)&&v==="doing")o.status[k]="doing";
+ for(const[k,v]of Object.entries(obj("conf")))if(ids.has(k)&&[1,2,3].includes(v))o.conf[k]=v;
+ for(const[k,v]of Object.entries(obj("due")))if(ids.has(k))o.due[k]=str(String(v),10);
+ for(const[k,v]of Object.entries(obj("notes")))if(ids.has(k)&&v&&typeof v.text==="string")o.notes[k]={text:v.text.slice(0,20000),updated:str(v.updated,10)};
+ o.sessions=arr("sessions").filter(s=>s&&num(s.mins)>0).slice(-5000).map(s=>({date:str(s.date,10),mins:Math.min(1440,num(s.mins)),id:ids.has(s.id)?s.id:""}));
+ o.labs=arr("labs").filter(l=>l&&l.model).slice(0,2000).map(l=>({id:str(l.id,40)||uid("l"),date:str(l.date,10),model:str(l.model,120),quant:str(l.quant,40),ctx:num(l.ctx),tps:num(l.tps),ttft:num(l.ttft),vram:num(l.vram),shared:num(l.shared),notes:str(l.notes,500)}));
+ if(Array.isArray(j.terms)){const seen=new Map(o.terms.map(t=>[t.term.toLowerCase(),t]));j.terms.forEach(t=>{if(!t||!t.term)return;const k=str(t.term,80).toLowerCase(),e=seen.get(k);if(e){e.def=str(t.def,4000);e.updated=str(t.updated,10)}else{const n={id:str(t.id,60)||uid("t"),term:str(t.term,80),def:str(t.def,4000),updated:str(t.updated,10)};o.terms.push(n);seen.set(k,n)}})}
+ o.questions=arr("questions").filter(q=>q&&q.q).slice(0,1000).map(q=>({id:str(q.id,40)||uid("q"),q:str(q.q,600),a:str(q.a,4000),done:!!q.done,date:str(q.date,10)}));
+ o.journal=str(j.journal,100000);o.weekGoal=Math.max(1,Math.min(80,num(j.weekGoal)||7));
+ o.timer=j.timer&&num(j.timer.start)?{start:num(j.timer.start),id:ids.has(j.timer.id)?j.timer.id:""}:null;
+ o.lastExport=str(j.lastExport,30);o.updated=str(j.updated,30);return o}
+function allItems(custom){return M.flatMap(m=>m.items.map(i=>({m,id:i[0],t:i[1],k:i[2],u:i[3],min:i[4],why:i[5],own:false})).concat((custom||S.custom).filter(c=>c.stage===m.id).map(c=>({m,id:c.id,t:c.t,k:c.k,u:c.u,min:c.min,why:c.why,own:true}))))}
+try{const a=localStorage.getItem(KEY);if(a)S=clean(JSON.parse(a));else{const b=localStorage.getItem(OLD);if(b)S=clean(JSON.parse(b))}}catch(e){}
+function persist(){S.updated=new Date().toISOString();try{localStorage.setItem(KEY,JSON.stringify(S));$("save").textContent="Saved on this device · "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}catch(e){$("save").textContent="This browser can't save here. Use Export file to keep your work."}}
+function soon(){$("save").textContent="Saving…";clearTimeout(saveT);saveT=setTimeout(persist,600)}
+const isDone=id=>!!S.done[id];
+const isDue=id=>isDone(id)&&S.due[id]&&S.due[id]<=today();
+const logged=id=>S.sessions.filter(s=>s.id===id).reduce((a,s)=>a+s.mins,0);
+function weekStart(){const d=new Date();const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return dstr(d)}
+function streak(){const days=new Set(S.sessions.map(s=>s.date).concat(Object.values(S.done)));let n=0,d=today();if(!days.has(d))d=addDays(d,-1);while(days.has(d)){n++;d=addDays(d,-1)}return n}
+function say(t){$("msg").textContent=t}
+function stats(m,items){const its=items.filter(x=>x.m===m),n=its.length,d=its.filter(x=>isDone(x.id)).length;return{n,d,left:its.filter(x=>!isDone(x.id)).reduce((a,x)=>a+x.min,0)}}
+function paintTop(){
+ const items=allItems(),total=items.length,done=items.filter(x=>isDone(x.id)).length;
+ const leftMin=items.filter(x=>!isDone(x.id)).reduce((a,x)=>a+x.min,0);
+ $("pct").innerHTML=Math.round(done*100/total)+"%<small>"+done+" of "+total+" lessons · about "+Math.round(leftMin/60)+" h left</small>";
+ const ws=weekStart(),week=S.sessions.filter(s=>s.date>=ws).reduce((a,s)=>a+s.mins,0),tot=S.sessions.reduce((a,s)=>a+s.mins,0);
+ const dueN=items.filter(x=>isDue(x.id)).length,days=S.lastExport?Math.floor((Date.now()-new Date(S.lastExport))/864e5):null;
+ $("stats").innerHTML='<div class="stat"><b>'+hrs(week)+'</b><span>this week of <input id="goal" type="number" min="1" max="80" value="'+S.weekGoal+'" aria-label="Weekly goal in hours" style="width:4.2em;min-height:30px;padding:2px 6px;display:inline"> h goal</span><div class="meter"><i style="width:'+Math.min(100,Math.round(week/(S.weekGoal*60)*100))+'%"></i></div></div><div class="stat"><b>'+(streak()===1?'1 day':streak()+' days')+'</b><span>study streak</span></div><div class="stat"><b>'+hrs(tot)+'</b><span>logged in total</span></div><div class="stat'+(dueN?" warn":"")+'"><b>'+dueN+'</b><span>reviews due</span></div><div class="stat'+(days===null||days>7?" warn":"")+'"><b>'+(days===null?"never":days===0?"today":days+" d ago")+'</b><span>last export (backup)</span></div>';
+ const nexts=items.filter(x=>!isDone(x.id)),next=nexts.find(x=>S.status[x.id]==="doing")||nexts[0],now=next?next.m.id:null;
+ $("route").innerHTML=M.map((m,i)=>{const s=stats(m,items),f=s.n&&s.d===s.n;return '<li class="'+(f?"full":s.d?"half":"")+'"><button class="stop'+(f?" done":"")+(m.id===now?" now":"")+'" data-jump="'+m.id+'" aria-label="Stage '+(i+1)+': '+esc(m.title)+'">'+(f?"✓":i+1)+'</button><span class="rlab">'+esc(m.short)+'<b>'+s.d+'/'+s.n+'</b></span></li>'}).join("");
+ const due=items.filter(x=>isDue(x.id));
+ $("review").innerHTML=due.length?'<div class="card rev"><div><div class="lbl">Review due · '+due.length+'</div><h2>'+link(due[0])+'</h2><div class="meta">Done '+esc(S.done[due[0].id])+'. Rewatch or reread the key part, then rate it again.</div></div><div class="row"><button class="btn sm ghost" data-rate="1" data-rid="'+due[0].id+'">Still shaky</button><button class="btn sm ghost" data-rate="2" data-rid="'+due[0].id+'">Okay</button><button class="btn sm" data-rate="3" data-rid="'+due[0].id+'">Solid</button></div></div>':"";
+ $("next").innerHTML=next?'<div class="card"><div><div class="lbl">'+(S.status[next.id]==="doing"?"In progress":"Continue here")+' · stage '+(M.indexOf(next.m)+1)+', '+esc(next.m.short)+'</div><h2>'+link(next)+'</h2><div class="meta">'+esc(next.k)+' · about '+hrs(next.min)+(logged(next.id)?' · '+hrs(logged(next.id))+' logged':'')+' · '+esc(next.why)+'</div></div><button class="btn" data-id="'+next.id+'">Mark done</button></div>':'<div class="card"><div><div class="lbl">Route complete</div><h2>Every lesson done. Add your own lessons to keep going.</h2></div></div>';
+ paintTimer(next);
+}
+function link(x){const u=safeUrl(x.u);return u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(x.t)+'</a>':esc(x.t)}
+function paintTimer(next){
+ const items=allItems(),tc=$("timerCard");
+ if(S.timer){const it=items.find(x=>x.id===S.timer.id);tc.innerHTML='<div><div class="lbl">Studying now</div><div class="row"><span class="timer" id="clock">0:00</span><span>'+esc(it?it.t:"General study")+'</span></div></div><div class="row"><button class="btn" id="tStop">Stop and log</button><button class="btn ghost" id="tCancel">Discard</button></div>';runClock()}
+ else{const opts=items.filter(x=>!isDone(x.id)||S.status[x.id]==="doing").map(x=>'<option value="'+x.id+'"'+(next&&x.id===next.id?" selected":"")+'>'+esc(x.m.short+": "+x.t)+'</option>').join("");
+  tc.innerHTML='<div><div class="lbl">Study timer</div><label style="margin-top:6px">What are you studying?<select id="tWhat"><option value="">General study</option>'+opts+'</select></label></div><div class="row"><button class="btn" id="tStart">Start timer</button></div>';clearInterval(tick)}
+}
+function runClock(){clearInterval(tick);const f=()=>{const el=$("clock");if(!el||!S.timer)return clearInterval(tick);const s=Math.floor((Date.now()-S.timer.start)/1000);el.textContent=(s>=3600?Math.floor(s/3600)+":"+String(Math.floor(s%3600/60)).padStart(2,"0"):Math.floor(s/60))+":"+String(s%60).padStart(2,"0")};f();tick=setInterval(f,1000)}
+function renderMods(){
+ const q=$("fq").value.trim().toLowerCase(),fk=$("fk").value,fs=$("fs").value,items=allItems();
+ const pass=x=>{if(fk&&x.k!==fk)return false;const n=S.notes[x.id];
+  if(fs==="todo"&&isDone(x.id))return false;if(fs==="done"&&!isDone(x.id))return false;if(fs==="doing"&&S.status[x.id]!=="doing")return false;if(fs==="due"&&!isDue(x.id))return false;if(fs==="notes"&&!(n&&n.text.trim()))return false;
+  if(q&&!(x.t+" "+x.why+" "+(n?n.text:"")).toLowerCase().includes(q))return false;return true};
+ const filtering=q||fk||fs;
+ $("mods").innerHTML=M.map((m,i)=>{const s=stats(m,items);const list=items.filter(x=>x.m===m&&pass(x)).map(itemHtml).join("");
+  if(filtering&&!list)return"";
+  return '<section class="mod'+(s.n&&s.d===s.n?" complete":"")+'" id="'+m.id+'"><div class="mh"><div class="num">'+(s.n&&s.d===s.n?"✓":i+1)+'</div><div><h3>'+esc(m.title)+'</h3><p>'+esc(m.goal)+'</p></div><div class="count">'+s.d+' of '+s.n+' done'+(s.left?'<br>about '+hrs(s.left)+' left':'')+'</div></div><div class="track"><i style="width:'+(s.n?Math.round(s.d*100/s.n):0)+'%"></i></div><ul class="items">'+(list||'<li class="empty">All done here.</li>')+'</ul>'+(filtering?"":'<details class="note" style="margin-top:10px"><summary>+ Add your own lesson to this stage</summary><form class="form" data-add="'+m.id+'"><label class="wide">Title<input name="t" required placeholder="e.g. A new course or model you found"></label><label>Type<select name="k">'+KINDS.map(k=>'<option>'+k+'</option>').join("")+'</select></label><label>Minutes<input name="min" type="number" min="1" value="30"></label><label class="wide">Link (optional)<input name="u" type="url" placeholder="https://…"></label><label class="wide">Why it matters<input name="why"></label><div class="wide"><button class="btn" type="submit">Add lesson</button></div></form></details>')+'</section>'}).join("")||'<p class="empty">No lessons match. Press Clear to see everything.</p>';
+}
+function itemHtml(x){const d=isDone(x.id),n=S.notes[x.id],has=n&&n.text.trim(),lg=logged(x.id),doing=S.status[x.id]==="doing",due=isDue(x.id),c=S.conf[x.id];
+ const words=has?n.text.trim().split(/\s+/).length:0;
+ return '<li class="item'+(d?" done":"")+(doing?" doing":"")+'" id="it-'+x.id+'"><button class="chk" data-id="'+x.id+'" aria-pressed="'+d+'" aria-label="'+(d?"Untick":"Tick")+': '+esc(x.t)+'">'+(d?"✓":"")+'</button><div><div class="it">'+link(x)+'</div><div class="why">'+esc(x.why)+'</div></div><div class="side"><span class="tag">'+esc(x.k)+(x.own?" · yours":"")+'</span><span class="meta">'+hrs(x.min)+'</span>'+(doing?'<span class="tag hot">in progress</span>':'')+(due?'<span class="tag due">review due</span>':'')+(d?'<span class="when">done '+esc(S.done[x.id])+'</span>':'')+'</div>'
+ +'<details class="note"'+((has||x.id==="m1a"&&!d)?" open":"")+'><summary>Notes and time'+(words?' <b>· '+words+' words</b>':'')+(lg?' <b>· '+hrs(lg)+' logged</b>':'')+(c?' <b>· '+["","shaky","okay","solid"][c]+'</b>':'')+'</summary><textarea data-note="'+x.id+'" aria-label="Notes for '+esc(x.t)+'" placeholder="What you learned, what you tried, questions…">'+esc(n?n.text:"")+'</textarea><div class="ctl"><span class="meta">Log time</span><button class="btn ghost sm" data-log="15" data-lid="'+x.id+'">+15 min</button><button class="btn ghost sm" data-log="30" data-lid="'+x.id+'">+30 min</button><button class="btn ghost sm" data-log="60" data-lid="'+x.id+'">+1 h</button>'+(d?'':'<button class="btn ghost sm'+(doing?" on":"")+'" data-doing="'+x.id+'" aria-pressed="'+doing+'">'+(doing?"In progress":"Mark in progress")+'</button>')+'</div>'+(d?'<div class="ctl"><span class="meta">How well do you understand it?</span>'+[1,2,3].map(r=>'<button class="btn ghost sm'+(c===r?" on":"")+'" data-rate="'+r+'" data-rid="'+x.id+'" aria-pressed="'+(c===r)+'">'+["","Shaky","Okay","Solid"][r]+'</button>').join("")+'</div>':'')+(x.own?'<div class="ctl"><button class="btn ghost sm" data-del="'+x.id+'">Delete this lesson</button></div>':'')+'</details></li>'}
+function renderLab(){const L=[...S.labs].sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+ const f=(v,d)=>v===null||v===undefined?"":(d?v.toFixed(d):v);
+ $("labT").innerHTML=L.length?'<thead><tr><th>Date</th><th>Model</th><th>Quant</th><th>Context</th><th>Tok/s</th><th>1st token</th><th>VRAM</th><th>Shared</th><th>Notes</th><th></th></tr></thead><tbody>'+L.map(l=>'<tr><td data-l="Date">'+esc(l.date)+'</td><td data-l="Model">'+esc(l.model)+'</td><td data-l="Quant">'+esc(l.quant)+'</td><td class="n" data-l="Context">'+esc(f(l.ctx))+'</td><td class="n" data-l="Tok/s">'+esc(f(l.tps,2))+'</td><td class="n" data-l="1st token">'+(l.ttft===null?"":esc(f(l.ttft,2))+" s")+'</td><td class="n" data-l="VRAM">'+(l.vram===null?"":esc(f(l.vram,1))+" GB")+'</td><td class="n" data-l="Shared">'+(l.shared===null?"":esc(f(l.shared,1))+" GB")+'</td><td data-l="Notes">'+esc(l.notes)+'</td><td><button class="btn ghost sm" data-ldel="'+esc(l.id)+'" aria-label="Delete run">Delete</button></td></tr>').join("")+'</tbody>':'<tbody><tr><td class="empty">No runs yet. Add your first test above, for example Gemma 4 26B at 96 tok/s.</td></tr></tbody>'}
+function renderTerms(){const T=[...S.terms].sort((a,b)=>(!a.def.trim())-(!b.def.trim())||a.term.localeCompare(b.term));const dn=S.terms.filter(t=>t.def.trim()).length;
+ $("gl").innerHTML='<p class="meta">'+dn+' of '+S.terms.length+' terms defined</p>'+T.map(t=>'<div class="term"><b>'+esc(t.term)+'</b><textarea data-term="'+esc(t.id)+'" aria-label="Definition of '+esc(t.term)+'" placeholder="Your own definition">'+esc(t.def)+'</textarea><button class="btn ghost sm" data-tdel="'+esc(t.id)+'" aria-label="Delete term">Delete</button></div>').join("")}
+function renderQs(){const Q=[...S.questions].sort((a,b)=>a.done-b.done||(b.date||"").localeCompare(a.date||""));
+ $("ql").innerHTML=Q.length?Q.map(q=>'<div class="q'+(q.done?" done":"")+'"><button class="chk" data-qdone="'+esc(q.id)+'" aria-pressed="'+q.done+'" aria-label="Mark answered">'+(q.done?"✓":"")+'</button><div><div class="qt">'+esc(q.q)+'</div><textarea data-qa="'+esc(q.id)+'" aria-label="Answer" placeholder="Answer, once you know it">'+esc(q.a)+'</textarea></div><div class="side"><span class="meta">'+esc(q.date)+'</span><button class="btn ghost sm" data-qdel="'+esc(q.id)+'">Delete</button></div></div>').join(""):'<p class="empty">No questions yet.</p>'}
+function render(){paintTop();renderMods();renderLab();renderTerms();renderQs();if(document.activeElement!==$("journal"))$("journal").value=S.journal}
+function toggle(id){if(S.done[id]){delete S.done[id];delete S.conf[id];delete S.due[id]}else{S.done[id]=today();delete S.status[id];if(S.timer&&S.timer.id===id)stopTimer(true)}render();persist();if(S.done[id])say("Done. Open its notes to rate how well you understood it.")}
+function rate(id,r){S.conf[id]=r;if(r===1)S.due[id]=addDays(today(),3);else if(r===2)S.due[id]=addDays(today(),7);else delete S.due[id];render();persist();say(r===3?"Marked solid.":"Review scheduled for "+S.due[id]+".")}
+function stopTimer(silent){if(!S.timer)return;const mins=Math.round((Date.now()-S.timer.start)/60000);if(mins>=1)S.sessions.push({date:today(),mins:Math.min(mins,720),id:S.timer.id||""});S.timer=null;if(!silent)say(mins>=1?"Logged "+hrs(Math.min(mins,720))+".":"Under a minute, nothing logged.")}
+function payload(){return Object.assign({app:"ai-learning-route",exported:new Date().toISOString()},S,{timer:null})}
+function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+function merge(a,b){const o=clean(JSON.parse(JSON.stringify(a)));const ids=new Set(o.custom.map(c=>c.id));b.custom.forEach(c=>{if(!ids.has(c.id))o.custom.push(c)});
+ for(const[k,v]of Object.entries(b.done))if(!o.done[k]||v<o.done[k])o.done[k]=v;
+ Object.assign(o.status,b.status);for(const[k,v]of Object.entries(b.conf))if(!o.conf[k])o.conf[k]=v;for(const[k,v]of Object.entries(b.due))if(!o.due[k])o.due[k]=v;
+ for(const[k,v]of Object.entries(b.notes))if(!o.notes[k]||(v.updated||"")>(o.notes[k].updated||"")||!o.notes[k].text.trim())o.notes[k]=v;
+ const sk=s=>s.date+"|"+s.mins+"|"+s.id,ss=new Set(o.sessions.map(sk));b.sessions.forEach(s=>{if(!ss.has(sk(s)))o.sessions.push(s)});
+ const li=new Set(o.labs.map(l=>l.id));b.labs.forEach(l=>{if(!li.has(l.id))o.labs.push(l)});
+ const tm=new Map(o.terms.map(t=>[t.term.toLowerCase(),t]));b.terms.forEach(t=>{const e=tm.get(t.term.toLowerCase());if(!e)o.terms.push(t);else if(t.def.trim()&&((t.updated||"")>(e.updated||"")||!e.def.trim())){e.def=t.def;e.updated=t.updated}});
+ const qm=new Map(o.questions.map(q=>[q.id,q]));b.questions.forEach(q=>{const e=qm.get(q.id);if(!e)o.questions.push(q);else{e.done=e.done||q.done;if(!e.a.trim())e.a=q.a}});
+ const ja=o.journal.trim(),jb=b.journal.trim();o.journal=!jb||ja.includes(jb)?o.journal:!ja||jb.includes(ja)?b.journal:o.journal+"\n\n--- merged from other device ---\n"+b.journal;
+ o.weekGoal=a.weekGoal;o.lastExport=a.lastExport;return o}
+function summary(){const items=allItems(),done=items.filter(x=>isDone(x.id)).length,tot=S.sessions.reduce((a,s)=>a+s.mins,0);
+ let t="# My AI learning route: progress and notes\nExported "+today()+" · "+done+" of "+items.length+" lessons done · "+hrs(tot)+" studied · streak "+streak()+" days\n";
+ const open=S.questions.filter(q=>!q.done);if(open.length)t+="\n## Open questions\n"+open.map(q=>"- "+q.q).join("\n")+"\n";
+ if(S.journal.trim())t+="\n## Notebook\n"+S.journal.trim()+"\n";
+ M.forEach((m,i)=>{const s=stats(m,items);t+="\n## Stage "+(i+1)+": "+m.title+" ("+s.d+"/"+s.n+")\n";
+  items.filter(x=>x.m===m).forEach(x=>{const n=S.notes[x.id],lg=logged(x.id),c=S.conf[x.id];t+="- ["+(isDone(x.id)?"x":" ")+"] "+x.t+(x.own?" (my own lesson)":"")+(isDone(x.id)?" (done "+S.done[x.id]+(c?", "+["","shaky","okay","solid"][c]:"")+")":S.status[x.id]==="doing"?" (in progress)":"")+(lg?" · "+hrs(lg)+" logged":"")+"\n";if(n&&n.text.trim())t+="  Notes: "+n.text.trim().replace(/\n/g,"\n  ")+"\n"})});
+ if(S.labs.length)t+="\n## Lab log\n| Date | Model | Quant | Ctx | Tok/s | 1st token s | VRAM GB | Shared GB | Notes |\n|---|---|---|---|---|---|---|---|---|\n"+S.labs.map(l=>"| "+[l.date,l.model,l.quant,l.ctx??"",l.tps??"",l.ttft??"",l.vram??"",l.shared??"",l.notes].join(" | ")+" |").join("\n")+"\n";
+ const defs=S.terms.filter(x=>x.def.trim());if(defs.length)t+="\n## My glossary\n"+defs.map(x=>"- **"+x.term+"**: "+x.def.trim().replace(/\n/g," ")).join("\n")+"\n";
+ const ans=S.questions.filter(q=>q.done);if(ans.length)t+="\n## Answered questions\n"+ans.map(q=>"- "+q.q+(q.a.trim()?"\n  "+q.a.trim().replace(/\n/g,"\n  "):"")).join("\n")+"\n";
+ return t}
+function showTab(t){document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));["route","lab","terms","qs","book"].forEach(x=>$("p-"+x).classList.toggle("hide",x!==t))}
+document.addEventListener("click",e=>{const g=s=>e.target.closest(s),b=g("button");if(!b)return;const d=b.dataset;
+ if(d.id){toggle(d.id);return}
+ if(d.jump){showTab("route");$(d.jump)?.scrollIntoView({behavior:"smooth"});return}
+ if(d.tab){showTab(d.tab);return}
+ if(d.rate){rate(d.rid,Number(d.rate));return}
+ if(d.log){S.sessions.push({date:today(),mins:Number(d.log),id:d.lid});render();persist();say("Logged "+hrs(Number(d.log))+".");return}
+ if(d.doing){if(S.status[d.doing])delete S.status[d.doing];else S.status[d.doing]="doing";render();persist();return}
+ if(d.del){S.custom=S.custom.filter(c=>c.id!==d.del);delete S.done[d.del];delete S.notes[d.del];render();persist();say("Lesson deleted.");return}
+ if(d.ldel){S.labs=S.labs.filter(l=>l.id!==d.ldel);render();persist();return}
+ if(d.tdel){S.terms=S.terms.filter(t=>t.id!==d.tdel);render();persist();return}
+ if(d.qdel){S.questions=S.questions.filter(q=>q.id!==d.qdel);render();persist();return}
+ if(d.qdone){const q=S.questions.find(q=>q.id===d.qdone);if(q)q.done=!q.done;render();persist();return}
+ switch(b.id){
+ case"tStart":S.timer={start:Date.now(),id:$("tWhat").value};if(S.timer.id&&!isDone(S.timer.id))S.status[S.timer.id]="doing";render();persist();break;
+ case"tStop":stopTimer();render();persist();break;
+ case"tCancel":S.timer=null;render();persist();say("Timer discarded.");break;
+ case"exp":S.lastExport=new Date().toISOString();persist();dl("ai-learning-route-"+today()+".json",JSON.stringify(payload(),null,2),"application/json");paintTop();say("Exported. Keep the file as a backup or import it on your other device.");break;
+ case"imp":$("file").click();break;
+ case"impMerge":if(pending){S=merge(S,pending);persist();render();say("Merged. Everything from both devices is kept.")}pending=null;$("impDlg").classList.add("hide");break;
+ case"impReplace":if(pending){const keep=S.lastExport;S=pending;S.lastExport=keep;persist();render();say("Replaced with the imported file.")}pending=null;$("impDlg").classList.add("hide");break;
+ case"impCancel":pending=null;$("impDlg").classList.add("hide");say("Import cancelled, nothing changed.");break;
+ case"sum":$("outbox").classList.remove("hide");$("out").value=summary();$("out").focus();$("out").select();break;
+ case"cpy":{const t=$("out").value;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>say("Copied. Paste it into Claude."),()=>{$("out").select();say("Press Ctrl+C (or long-press Copy on iPhone) to copy the selected text.")});break}
+ case"dmd":dl("ai-learning-route-"+today()+".md",$("out").value,"text/markdown");say("Downloaded the summary as a .md file.");break;
+ case"cls":$("outbox").classList.add("hide");break;
+ case"labCsv":{const h=["date","model","quant","context","tokens_per_s","first_token_s","vram_gb","shared_gb","notes"],q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';dl("model-tests-"+today()+".csv",[h.join(",")].concat(S.labs.map(l=>[l.date,l.model,l.quant,l.ctx,l.tps,l.ttft,l.vram,l.shared,l.notes].map(q).join(","))).join("\n"),"text/csv");break}
+ case"fx":$("fq").value="";$("fk").value="";$("fs").value="";renderMods();break;
+ }});
+$("file").addEventListener("change",async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+ try{const txt=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsText(f)});const j=JSON.parse(txt);if(!j||j.app!=="ai-learning-route")throw 0;
+  pending=clean(j);$("impTxt").textContent=f.name+": "+Object.keys(pending.done).length+" lessons done, "+Object.keys(pending.notes).length+" notes, "+pending.labs.length+" lab runs, "+pending.questions.length+" questions"+(j.exported?", exported "+String(j.exported).slice(0,10):"")+". How should it be imported?";$("impDlg").classList.remove("hide");$("impDlg").scrollIntoView({behavior:"smooth",block:"center"})}
+ catch(err){say("That file isn't an export from this page, so nothing was changed.")}});
+document.addEventListener("submit",e=>{e.preventDefault();const f=e.target;
+ if(f.dataset.add){const v=n=>f.elements[n].value.trim();if(!v("t"))return;S.custom.push({id:uid("c-"),stage:f.dataset.add,t:v("t").slice(0,200),k:KINDS.includes(v("k"))?v("k"):"Do",u:safeUrl(v("u")),min:Math.max(1,Number(v("min"))||30),why:v("why").slice(0,400)});render();persist();say("Lesson added."+(v("u")&&!safeUrl(v("u"))?" The link was left out because it must start with https://.":""));return}
+ if(f.id==="labForm"){const g=id=>$(id).value.trim();if(!g("l-model")){$("labErr").textContent="Enter the model name first.";return}$("labErr").textContent="";
+  S.labs.push({id:uid("l"),date:g("l-date")||today(),model:g("l-model").slice(0,120),quant:g("l-quant").slice(0,40),ctx:num(g("l-ctx")),tps:num(g("l-tps")),ttft:num(g("l-ttft")),vram:num(g("l-vram")),shared:num(g("l-shared")),notes:g("l-notes").slice(0,500)});f.reset();$("l-date").value=today();render();persist();say("Run added to the lab log.");return}
+ if(f.id==="termForm"){const t=$("t-new").value.trim();if(!t)return;if(S.terms.some(x=>x.term.toLowerCase()===t.toLowerCase())){say("That term is already in your glossary.");return}S.terms.push({id:uid("t-"),term:t.slice(0,80),def:"",updated:""});$("t-new").value="";render();persist();return}
+ if(f.id==="qForm"){const t=$("q-new").value.trim();if(!t)return;S.questions.push({id:uid("q"),q:t.slice(0,600),a:"",done:false,date:today()});$("q-new").value="";render();persist();return}});
+document.addEventListener("input",e=>{const t=e.target,d=t.dataset;
+ if(d.note){if(t.value.trim())S.notes[d.note]={text:t.value,updated:today()};else delete S.notes[d.note];soon()}
+ else if(d.term){const x=S.terms.find(x=>x.id===d.term);if(x){x.def=t.value;x.updated=today()}soon()}
+ else if(d.qa){const q=S.questions.find(q=>q.id===d.qa);if(q)q.a=t.value;soon()}
+ else if(t.id==="journal"){S.journal=t.value;soon()}
+ else if(t.id==="goal"){const v=Number(t.value);if(v>=1&&v<=80){S.weekGoal=v;soon()}}
+ else if(t.id==="fq")renderMods()});
+document.addEventListener("change",e=>{if(e.target.id==="fk"||e.target.id==="fs")renderMods();if(e.target.id==="goal")paintTop()});
+$("l-date").value=today();
+render();
+let deferredInstall=null;
+const standalone=window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+if(location.protocol.startsWith("http")){
+ if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+ if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(p=>p||navigator.storage.persist()).catch(()=>{});
+ if(!standalone&&isIOS)$("inst").classList.remove("hide");
+}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;$("inst").classList.remove("hide")});
+window.addEventListener("appinstalled",()=>{$("inst").classList.add("hide");say("Installed. Open AI Route from your apps or home screen.")});
+$("inst").addEventListener("click",async()=>{if(deferredInstall){deferredInstall.prompt();const r=await deferredInstall.userChoice.catch(()=>null);deferredInstall=null;if(r&&r.outcome==="accepted")$("inst").classList.add("hide")}else if(isIOS){$("iosTip").classList.remove("hide")}});
+$("iosClose").addEventListener("click",()=>$("iosTip").classList.add("hide"));
+
+}
+</script>
+</body></html>
